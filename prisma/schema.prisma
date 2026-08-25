@@ -129,6 +129,7 @@ enum EmployeeStatus {
 model Employee {
   id             String          @id @default(cuid())
   code           String          @unique
+  pin            String?
   nationalId     String?         @unique
   firstName      String
   lastName       String
