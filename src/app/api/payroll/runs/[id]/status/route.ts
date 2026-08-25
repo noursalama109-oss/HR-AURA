@@ -28,6 +28,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   if (next === "APPROVED") {
     const p = startOfMonth(run.period);
     const pEnd = endOfMonth(run.period);
+
     for (const item of run.items) {
       if (item.loanDed > 0) {
         const insts = await db.loanInstallment.findMany({
@@ -43,6 +44,13 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
             await db.loan.update({ where: { id: loan.id }, data: { paidAmount: paid, remainingAmount: remaining, status: remaining <= 0 ? "COMPLETED" : loan.status } });
           }
         }
+      }
+
+      if (item.withdrawalsDed > 0) {
+        await db.withdrawal.updateMany({
+          where: { employeeId: item.employeeId, status: "ACTIVE", date: { gte: p, lte: pEnd } },
+          data: { status: "DEDUCTED" },
+        });
       }
     }
     await db.payrollRun.update({ where: { id }, data: { status: "APPROVED", approvedBy: user.id, approvedAt: new Date() } });

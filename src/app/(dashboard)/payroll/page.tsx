@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Wallet, Plus, CheckCircle2, Eye, Banknote } from "lucide-react";
+import { Wallet, Plus, CheckCircle2, Eye, Banknote, RefreshCw } from "lucide-react";
 
 const runLabels: Record<string, { label: string; cls: string }> = {
   DRAFT: { label: "مسودة", cls: "bg-slate-100 text-slate-600 border-slate-200" },
@@ -41,6 +41,15 @@ export default function PayrollPage() {
     else setError(x.error ?? "حدث خطأ");
   }
 
+  async function recalc(runId: string) {
+    setBusy(true); setMsg(""); setError("");
+    const res = await fetch(`/api/payroll/runs/${runId}/recalc`, { method: "POST" });
+    const x = await res.json();
+    setBusy(false);
+    if (res.ok) { setMsg("تمت إعادة الحساب ✅"); load(); }
+    else setError(x.error ?? "حدث خطأ");
+  }
+
   async function advance(runId: string) {
     setBusy(true); setMsg(""); setError("");
     const res = await fetch(`/api/payroll/runs/${runId}/status`, { method: "POST" });
@@ -55,7 +64,7 @@ export default function PayrollPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">المرتبات</h1>
-          <p className="text-slate-500 mt-1">محرك حساب تلقائي: أساسي + إضافي + مكافآت − خصومات − تأمينات − ضرائب</p>
+          <p className="text-slate-500 mt-1">أساسي + إضافي + مكافآت − غياب − تأخير − سلف − مسحوبات − جزاءات − تأمينات − ضرائب</p>
         </div>
         <div className="flex items-center gap-2">
           <input type="month" value={month} onChange={e => setMonth(e.target.value)} className={inputCls} />
@@ -90,6 +99,11 @@ export default function PayrollPage() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-sm font-extrabold text-emerald-700">إجمالي الصافي: {n(totalNet)} ج.م</div>
+                {(run.status === "CALCULATED" || run.status === "REVIEWED") && (
+                  <button onClick={() => recalc(run.id)} disabled={busy} className="flex items-center gap-1 text-xs font-bold bg-slate-600 text-white rounded-lg px-3 py-2 hover:bg-slate-700 disabled:opacity-50">
+                    <RefreshCw className="w-4 h-4" /> إعادة الحساب
+                  </button>
+                )}
                 {run.status === "CALCULATED" && (
                   <button onClick={() => advance(run.id)} disabled={busy} className="flex items-center gap-1 text-xs font-bold bg-amber-600 text-white rounded-lg px-3 py-2 hover:bg-amber-700 disabled:opacity-50">
                     <Eye className="w-4 h-4" /> مراجعة
@@ -97,7 +111,7 @@ export default function PayrollPage() {
                 )}
                 {run.status === "REVIEWED" && (
                   <button onClick={() => advance(run.id)} disabled={busy} className="flex items-center gap-1 text-xs font-bold bg-emerald-600 text-white rounded-lg px-3 py-2 hover:bg-emerald-700 disabled:opacity-50">
-                    <CheckCircle2 className="w-4 h-4" /> اعتماد (يخصم أقساط السلف)
+                    <CheckCircle2 className="w-4 h-4" /> اعتماد (يخصم السلف والمسحوبات)
                   </button>
                 )}
                 {run.status === "APPROVED" && (
@@ -110,7 +124,7 @@ export default function PayrollPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>{["الموظف", "الأساسي", "الإضافي", "المكافآت", "غياب", "تأخير", "سلف", "جزاءات", "تأمينات", "ضرائب", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2.5 font-bold text-slate-600">{h}</th>)}</tr>
+                  <tr>{["الموظف", "الأساسي", "الإضافي", "المكافآت", "غياب", "تأخير", "سلف", "مسحوبات", "جزاءات", "تأمينات", "ضرائب", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2.5 font-bold text-slate-600">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {run.items.map((i: any) => (
@@ -122,6 +136,7 @@ export default function PayrollPage() {
                       <td className="px-3 py-2.5 text-rose-600">{n(i.absencesDed)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.lateDed)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.loanDed)}</td>
+                      <td className="px-3 py-2.5 text-rose-600">{n(i.withdrawalsDed)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.penalties)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.insurance)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.tax)}</td>

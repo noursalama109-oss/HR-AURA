@@ -2,8 +2,71 @@
 
 html {
   direction: rtl;
+  scroll-behavior: smooth;
 }
 
 body {
   @apply bg-slate-100 text-slate-900 antialiased;
+}
+
+/* ===== Smooth system-wide transitions ===== */
+button, a, select, input, textarea {
+  transition: all 0.2s ease;
+}
+
+/* ===== Sidebar smooth width animation ===== */
+.sidebar {
+  transition: width 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.sidebar .lbl {
+  transition: opacity 0.3s ease;
+}
+.sidebar nav::-webkit-scrollbar {
+  width: 4px;
+}
+.sidebar nav::-webkit-scrollbar-thumb {
+  background: #334155;
+  border-radius: 4px;
+}
+
+/* ===== Page transition ===== */
+@keyframes pageIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.page-enter {
+  animation: pageIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===== Modals animation (system-wide) ===== */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(20px) scale(0.97); }
+  to { opacity: 1; transform: none; }
+}
+.fixed.inset-0 {
+  animation: fadeIn 0.25s ease;
+}
+.fixed.inset-0 > div {
+  animation: slideUp 0.35s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===== Cards entrance ===== */
+@keyframes cardIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+main .bg-white {
+  animation: cardIn 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===== Print only the QR area ===== */
+@media print {
+  body * { visibility: hidden; }
+  .print-area, .print-area * { visibility: visible; }
+  .print-area { position: fixed; inset: 0; width: 100%; border: none; }
+  .no-print { display: none !important; }
 }

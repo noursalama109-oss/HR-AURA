@@ -1,18 +1,22 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { Settings as SettingsIcon, Save, Building2, ShieldCheck, MapPin } from "lucide-react";
+import { Settings as SettingsIcon, Save, Building2, ShieldCheck, Printer, Pencil, Plus } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
+import MapPicker from "@/components/MapPicker";
+import CompanyModal from "@/components/CompanyModal";
+import BranchModal from "@/components/BranchModal";
+import PrintModal from "@/components/PrintModal";
 
 const labels: Record<string, string> = {
   "attendance.require_trusted_device": "فرض الجهاز الموثوق عند الحضور",
   "attendance.require_geofence": "فرض النطاق الجغرافي (GPS)",
-  "attendance.require_shift": "فرض وجود وردية للحضور",
   "attendance.grace_minutes": "سماح التأخير (دقائق)",
   "contracts.alert_days": "تنبيهات انتهاء العقود/المستندات (أيام)",
   "payroll.insurance_rate": "نسبة التأمينات",
   "payroll.tax_rate": "نسبة الضرائب",
 };
-const booleans = ["attendance.require_trusted_device", "attendance.require_geofence", "attendance.require_shift"];
+const booleans = ["attendance.require_trusted_device", "attendance.require_geofence"];
 
 export default function SettingsPage() {
   const [data, setData] = useState<any>(null);
@@ -20,6 +24,10 @@ export default function SettingsPage() {
   const [msg, setMsg] = useState("");
   const [error, setError] = useState("");
   const [busyKey, setBusyKey] = useState("");
+  const [printBranch, setPrintBranch] = useState<any>(null);
+  const [companyForm, setCompanyForm] = useState<any>(null);
+  const [branchForm, setBranchForm] = useState<any>(null);
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
 
   const load = useCallback(async () => {
     const res = await fetch("/api/settings");
@@ -44,7 +52,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold text-slate-900">الإعدادات</h1>
-        <p className="text-slate-500 mt-1">تحكم كامل في سلوك النظام — التغييرات تسري فوراً</p>
+        <p className="text-slate-500 mt-1">تحكم كامل: النظام + الشركة + الفروع + QR + الخريطة</p>
       </div>
 
       {(msg || error) && (
@@ -86,28 +94,56 @@ export default function SettingsPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
-          <div className="px-5 py-4 border-b border-slate-200 font-extrabold text-slate-900 flex items-center gap-2">
-            <Building2 className="w-5 h-5 text-indigo-600" /> الشركة والفروع
+          <div className="px-5 py-4 border-b border-slate-200 font-extrabold text-slate-900 flex items-center justify-between">
+            <span className="flex items-center gap-2"><Building2 className="w-5 h-5 text-indigo-600" /> الشركة والفروع + QR</span>
+            <button onClick={() => setBranchForm({ initial: null, isNew: true })}
+              className="flex items-center gap-1 bg-indigo-600 text-white text-xs font-bold rounded-lg px-3 py-2 hover:bg-indigo-700">
+              <Plus className="w-3.5 h-3.5" /> إضافة فرع
+            </button>
           </div>
           {!data ? <div className="p-8 text-center text-slate-500 font-bold">جاري التحميل...</div> : (
             <div className="p-5 space-y-4">
-              {data.company && (
-                <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-4">
-                  <div className="font-extrabold text-indigo-900">{data.company.name}</div>
-                  <div className="text-sm text-indigo-700 mt-1">{data.company.email} • {data.company.phone}</div>
+              {data.company ? (
+                <div className="rounded-lg bg-indigo-50 border border-indigo-200 p-4 flex items-center justify-between gap-3">
+                  <div>
+                    <div className="font-extrabold text-indigo-900">{data.company.name}</div>
+                    <div className="text-sm text-indigo-700 mt-1">{data.company.email} • {data.company.phone}</div>
+                    <div className="text-xs text-indigo-500 mt-0.5">{data.company.address}</div>
+                  </div>
+                  <button onClick={() => setCompanyForm(data.company)}
+                    className="flex items-center gap-1 bg-indigo-600 text-white text-xs font-bold rounded-lg px-3 py-2 hover:bg-indigo-700 shrink-0">
+                    <Pencil className="w-3.5 h-3.5" /> تعديل
+                  </button>
                 </div>
+              ) : (
+                <button onClick={() => setCompanyForm({})}
+                  className="w-full rounded-lg border-2 border-dashed border-indigo-300 text-indigo-600 font-bold py-4 hover:bg-indigo-50">
+                  + إضافة بيانات الشركة
+                </button>
               )}
               {data.branches.map((b: any) => (
-                <div key={b.id} className="rounded-lg border border-slate-200 p-4 flex items-center justify-between">
-                  <div>
-                    <div className="font-bold text-slate-900">{b.name}</div>
-                    <div className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                      <MapPin className="w-3.5 h-3.5" /> نطاق GPS: {b.geofenceRadius} متر
+                <div key={b.id} className="rounded-lg border border-slate-200 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="bg-white p-1.5 rounded-lg border border-slate-200 shrink-0">
+                        <QRCodeSVG value={`${origin}/kiosk?b=${b.qrSecret}`} size={56} />
+                      </div>
+                      <div>
+                        <div className="font-bold text-slate-900">{b.name}</div>
+                        <div className="text-xs text-slate-500 mt-1">نطاق GPS: {b.geofenceRadius} متر</div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => setBranchForm({ initial: { ...b, latitude: String(b.latitude), longitude: String(b.longitude), geofenceRadius: String(b.geofenceRadius), isActive: b.isActive ? "true" : "false" }, isNew: false })}
+                        className="flex items-center gap-1 bg-slate-700 text-white text-xs font-bold rounded-lg px-3 py-2 hover:bg-slate-800">
+                        <Pencil className="w-3.5 h-3.5" /> تعديل
+                      </button>
+                      <button onClick={() => setPrintBranch(b)}
+                        className="flex items-center gap-1 bg-slate-800 text-white text-xs font-bold rounded-lg px-3 py-2 hover:bg-slate-900">
+                        <Printer className="w-3.5 h-3.5" /> طباعة
+                      </button>
                     </div>
                   </div>
-                  <span className={`text-xs font-bold border rounded-full px-2.5 py-1 ${b.isActive ? "bg-emerald-50 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-500 border-slate-200"}`}>
-                    {b.isActive ? "نشط" : "متوقف"}
-                  </span>
                 </div>
               ))}
             </div>
@@ -132,6 +168,16 @@ export default function SettingsPage() {
           )}
         </div>
       </div>
+
+      {companyForm && (
+        <CompanyModal initial={companyForm} onClose={() => setCompanyForm(null)}
+          onSaved={() => { setCompanyForm(null); setMsg("تم حفظ بيانات الشركة ✅"); load(); }} />
+      )}
+      {branchForm && (
+        <BranchModal initial={branchForm.initial} isNew={branchForm.isNew} onClose={() => setBranchForm(null)}
+          onSaved={() => { setBranchForm(null); setMsg("تم حفظ بيانات الفرع ✅"); load(); }} />
+      )}
+      {printBranch && <PrintModal branch={printBranch} onClose={() => setPrintBranch(null)} />}
     </div>
   );
 }

@@ -24,6 +24,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
       leaveRequests: { include: { leaveType: true }, orderBy: { createdAt: "desc" } },
       contracts: { orderBy: { startDate: "desc" } },
       loans: { include: { installments: true }, orderBy: { requestedAt: "desc" } },
+      withdrawals: { orderBy: { date: "desc" } },
       payrollItems: { include: { payrollRun: true } },
       documents: { orderBy: { createdAt: "desc" } },
       penalties: { orderBy: { issuedAt: "desc" } },

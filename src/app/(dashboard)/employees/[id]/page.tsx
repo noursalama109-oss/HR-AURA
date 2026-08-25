@@ -24,6 +24,7 @@ const tabs = [
   { id: "leaves", label: "الإجازات" },
   { id: "contracts", label: "العقود" },
   { id: "loans", label: "السلف" },
+  { id: "withdrawals", label: "المسحوبات" },
   { id: "payroll", label: "المرتبات" },
   { id: "documents", label: "المستندات" },
   { id: "penalties", label: "الجزاءات والمكافآت" },
@@ -225,7 +226,29 @@ export default function EmployeeProfilePage() {
         </Card>
       )}
 
-      {tab === "payroll" && (
+      {tab === "withdrawals" && (
+        <Card title="المسحوبات">
+          {emp.withdrawals.length === 0 ? <Empty msg="لا توجد مسحوبات" /> : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead><tr className="bg-slate-50">{["التاريخ", "المبلغ", "السبب", "الحالة"].map(h => <th key={h} className="text-right px-3 py-2 font-bold text-slate-600">{h}</th>)}</tr></thead>
+                <tbody className="divide-y divide-slate-100">
+                  {emp.withdrawals.map((w: any) => (
+                    <tr key={w.id}>
+                      <td className="px-3 py-2 font-bold">{d(w.date)}</td>
+                      <td className="px-3 py-2 text-rose-600 font-bold">{Number(w.amount).toLocaleString("ar-EG")}</td>
+                      <td className="px-3 py-2">{w.reason || "—"}</td>
+                      <td className="px-3 py-2 font-bold">{w.status === "DEDUCTED" ? "تم الخصم" : "قيد الخصم"}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </Card>
+      )}
+
+{tab === "payroll" && (
         <Card title="كشف المرتبات">
           {emp.payrollItems.length === 0 ? <Empty msg="لا توجد مرتبات" /> : (
             <div className="overflow-x-auto">
