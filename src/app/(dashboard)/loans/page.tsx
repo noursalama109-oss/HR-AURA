@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { Fragment, useCallback, useEffect, useState } from "react";
 import { HandCoins, Plus, ChevronDown, ChevronUp } from "lucide-react";
 
 const loanLabels: Record<string, { label: string; cls: string }> = {
@@ -84,7 +84,7 @@ export default function LoansPage() {
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {loans.map((l: any) => (
-                  <>
+                  <Fragment key={l.id}>
                     <tr key={l.id} className="hover:bg-slate-50">
                       <td className="px-2 py-3">
                         <button onClick={() => setOpen(open === l.id ? null : l.id)} className="text-slate-400 hover:text-indigo-600 p-1">
@@ -113,7 +113,7 @@ export default function LoansPage() {
                         </td>
                       </tr>
                     )}
-                  </>
+                  </Fragment>
                 ))}
               </tbody>
             </table>
