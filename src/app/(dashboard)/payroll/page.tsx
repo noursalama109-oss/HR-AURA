@@ -1,4 +1,6 @@
 "use client";
+import PayslipModal from "@/components/PayslipModal";
+import { Printer, Download } from "lucide-react";
 
 import { useCallback, useEffect, useState } from "react";
 import { Wallet, Plus, CheckCircle2, Eye, Banknote, RefreshCw } from "lucide-react";
@@ -16,6 +18,17 @@ function d(x: any) { return x ? new Date(x).toLocaleDateString("ar-EG", { month:
 function n(x: any) { return Number(x ?? 0).toLocaleString("ar-EG"); }
 
 export default function PayrollPage() {
+  const [slip, setSlip] = useState<any>(null);
+  function exportCSV() {
+    if (!run) return;
+    const head = ["الموظف","أيام العمل","الأساسي","الإضافي","بدل إجازة","المكافآت","غياب","سلف","مسحوبات","جزاءات","تأمينات","ضرائب","الصافي"];
+    const rows = run.items.map((i: any) => [i.employee.firstName + " " + i.employee.lastName, i.workedDays, i.basicSalary, i.overtime, i.allowances, i.bonuses, i.absencesDed, i.loanDed, i.withdrawalsDed, i.penalties, i.insurance, i.tax, i.net]);
+    const csv = "\uFEFF" + [head, ...rows].map(r => r.join(",")).join("\n");
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+    a.download = "payroll.csv";
+    a.click();
+  }
   const [runs, setRuns] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [month, setMonth] = useState(new Date().toISOString().slice(0, 7));
@@ -61,6 +74,7 @@ export default function PayrollPage() {
 
   return (
     <div className="space-y-6">
+      {slip && <PayslipModal item={slip} onClose={() => setSlip(null)} />}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">المرتبات</h1>
@@ -124,13 +138,13 @@ export default function PayrollPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>{["الموظف", "أيام العمل", "الأساسي", "الإضافي", "بدل إجازة", "المكافآت", "غياب", "سلف", "مسحوبات", "جزاءات", "تأمينات", "ضرائب", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2.5 font-bold text-slate-600">{h}</th>)}</tr>
+                  <tr>{["الموظف", "أيام العمل", "الأساسي", "الإضافي", "بدل إجازة", "المكافآت", "غياب", "سلف", "مسحوبات", "جزاءات", "تأمينات", "ضرائب", "الصافي", "قسيمة"].map(h => <th key={h} className="text-right px-3 py-2.5 font-bold text-slate-600">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {run.items.map((i: any) => (
                     <tr key={i.id} className="hover:bg-slate-50">
                       <td className="px-3 py-2.5 font-bold text-slate-900">{i.employee.firstName} {i.employee.lastName}</td>
-                      <td className="px-3 py-2.5"><td className="px-3 py-2.5 font-bold text-indigo-600">{i.workedDays}</td>
+                      <td className="px-3 py-2.5 font-bold text-indigo-600">{i.workedDays}</td>
                       <td className="px-3 py-2.5 font-bold">{n(i.basicSalary)}</td>
                       <td className="px-3 py-2.5">{n(i.overtime)}</td>
                       <td className="px-3 py-2.5 text-teal-600 font-bold">{n(i.allowances)}</td>
@@ -142,6 +156,7 @@ export default function PayrollPage() {
                       <td className="px-3 py-2.5 text-rose-600">{n(i.insurance)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.tax)}</td>
                       <td className="px-3 py-2.5 font-extrabold text-emerald-700">{n(i.net)}</td>
+                      <td className="px-3 py-2.5"><button onClick={() => setSlip(i)} className="text-slate-500 hover:bg-slate-100 rounded-lg p-2 inline-flex"><Printer className="w-4 h-4" /></button></td>
                     </tr>
                   ))}
                 </tbody>

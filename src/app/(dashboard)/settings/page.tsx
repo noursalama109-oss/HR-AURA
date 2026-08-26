@@ -15,6 +15,11 @@ const labels: Record<string, string> = {
   "payroll.insurance_rate": "نسبة التأمينات",
   "payroll.tax_rate": "نسبة الضرائب",
   "payroll.overtime_multiplier": "معامل الأوفر تايم (1 عادي / 1.5 بساعة ونص)",
+  "attendance.overtime_after_hours": "الأوفر تايم يبدأ بعد (ساعة)",
+  "payroll.work_days": "أيام الشهر الرسمية (لحساب اليوم)",
+  "payroll.work_hours": "ساعات اليوم الرسمية",
+  "leaves.monthly_days": "عدد أيام الإجازة الشهرية",
+  "attendance.require_pin": "طلب PIN عند تسجيل الحضور",
 };
 const booleans = ["attendance.require_trusted_device", "attendance.require_geofence", "attendance.require_pin"];
 
@@ -52,6 +57,7 @@ export default function SettingsPage() {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-extrabold text-slate-900">الإعدادات</h1>
+            <button onClick={async () => { const r = await fetch("/api/backup"); const d = await r.json(); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(d, null, 2)], { type: "application/json" })); a.download = "hr-aura-backup.json"; a.click(); }} className="mt-2 bg-slate-800 text-white text-sm font-bold rounded-lg px-4 py-2 hover:bg-slate-900">💾 نسخ احتياطي كامل</button>
         <p className="text-slate-500 mt-1">تحكم كامل: النظام + الشركة + الفروع + QR + الخريطة</p>
       </div>
 
