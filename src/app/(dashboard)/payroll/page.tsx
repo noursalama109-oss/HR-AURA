@@ -124,17 +124,18 @@ export default function PayrollPage() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-slate-50 border-b border-slate-200">
-                  <tr>{["الموظف", "الأساسي", "الإضافي", "المكافآت", "غياب", "تأخير", "سلف", "مسحوبات", "جزاءات", "تأمينات", "ضرائب", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2.5 font-bold text-slate-600">{h}</th>)}</tr>
+                  <tr>{["الموظف", "أيام العمل", "الأساسي", "الإضافي", "بدل إجازة", "المكافآت", "غياب", "سلف", "مسحوبات", "جزاءات", "تأمينات", "ضرائب", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2.5 font-bold text-slate-600">{h}</th>)}</tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
                   {run.items.map((i: any) => (
                     <tr key={i.id} className="hover:bg-slate-50">
                       <td className="px-3 py-2.5 font-bold text-slate-900">{i.employee.firstName} {i.employee.lastName}</td>
-                      <td className="px-3 py-2.5">{n(i.basicSalary)}</td>
+                      <td className="px-3 py-2.5"><td className="px-3 py-2.5 font-bold text-indigo-600">{i.workedDays}</td>
+                      <td className="px-3 py-2.5 font-bold">{n(i.basicSalary)}</td>
                       <td className="px-3 py-2.5">{n(i.overtime)}</td>
+                      <td className="px-3 py-2.5 text-teal-600 font-bold">{n(i.allowances)}</td>
                       <td className="px-3 py-2.5">{n(i.bonuses)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.absencesDed)}</td>
-                      <td className="px-3 py-2.5 text-rose-600">{n(i.lateDed)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.loanDed)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.withdrawalsDed)}</td>
                       <td className="px-3 py-2.5 text-rose-600">{n(i.penalties)}</td>

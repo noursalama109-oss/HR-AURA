@@ -3,7 +3,7 @@ import { db } from "@/lib/db";
 import { getSessionUser } from "@/lib/session";
 import { hasPermission } from "@/lib/auth-utils";
 import { notifyHr } from "@/lib/attendance";
-import { differenceInCalendarDays } from "date-fns";
+import { differenceInCalendarDays, startOfMonth, endOfMonth } from "date-fns";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +20,22 @@ export async function GET() {
       include: { employee: { select: { id: true, firstName: true, lastName: true, code: true } }, leaveType: true },
     }),
   ]);
-  return NextResponse.json({ requests, balances });
+  const mDays = parseInt(await getSetting("leaves.monthly_days", "4"));
+  const mS = startOfMonth(new Date());
+  const mE = endOfMonth(new Date());
+  for (const b of balances as any[]) {
+    if (b.leaveType?.monthly) {
+      const used = await db.leaveRequest.aggregate({
+        where: { employeeId: b.employeeId, leaveTypeId: b.leaveTypeId, status: "APPROVED", startDate: { gte: mS, lte: mE } },
+        _sum: { days: true },
+      });
+      b.used = used._sum.days ?? 0;
+      b.total = mDays;
+      b.remaining = Math.max(0, mDays - (used._sum.days ?? 0));
+    }
+  }
+  const types = await db.leaveType.findMany();
+  return NextResponse.json({ requests, balances, types });
 }
 
 export async function POST(req: Request) {

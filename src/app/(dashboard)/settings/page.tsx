@@ -11,12 +11,12 @@ import PrintModal from "@/components/PrintModal";
 const labels: Record<string, string> = {
   "attendance.require_trusted_device": "فرض الجهاز الموثوق عند الحضور",
   "attendance.require_geofence": "فرض النطاق الجغرافي (GPS)",
-  "attendance.grace_minutes": "سماح التأخير (دقائق)",
   "contracts.alert_days": "تنبيهات انتهاء العقود/المستندات (أيام)",
   "payroll.insurance_rate": "نسبة التأمينات",
   "payroll.tax_rate": "نسبة الضرائب",
+  "payroll.overtime_multiplier": "معامل الأوفر تايم (1 عادي / 1.5 بساعة ونص)",
 };
-const booleans = ["attendance.require_trusted_device", "attendance.require_geofence"];
+const booleans = ["attendance.require_trusted_device", "attendance.require_geofence", "attendance.require_pin"];
 
 export default function SettingsPage() {
   const [data, setData] = useState<any>(null);

@@ -20,6 +20,7 @@ const loanLabels: Record<string, string> = { PENDING: "قيد الانتظار",
 const tabs = [
   { id: "personal", label: "البيانات الشخصية" },
   { id: "job", label: "البيانات الوظيفية" },
+  { id: "devices", label: "الأجهزة الموثوقة" },
   { id: "attendance", label: "الحضور" },
   { id: "leaves", label: "الإجازات" },
   { id: "contracts", label: "العقود" },
@@ -70,6 +71,12 @@ export default function EmployeeProfilePage() {
   if (loading) return <div className="p-12 text-center text-slate-500 font-bold">جاري التحميل...</div>;
   if (!emp) return <div className="p-12 text-center text-red-600 font-bold">الموظف غير موجود</div>;
 
+
+  async function unlinkDevice(id: string) {
+    if (!confirm("فك ربط هذا الجهاز؟ سيسجل الموظف من الجديد كأول مرة.")) return;
+    const res = await fetch(`/api/trusted-devices/${id}`, { method: "DELETE" });
+    if (res.ok) setEmp((e: any) => ({ ...e, trustedDevices: (e.trustedDevices ?? []).filter((d: any) => d.id !== id) }));
+  }
   return (
     <div className="space-y-6">
       <Link href="/employees" className="inline-flex items-center gap-2 text-sm font-bold text-indigo-600 hover:underline">
@@ -115,6 +122,7 @@ export default function EmployeeProfilePage() {
 
       {tab === "job" && (
         <Card title="البيانات الوظيفية">
+          <div className="md:col-span-2 rounded-lg bg-indigo-50 border border-indigo-200 p-3 text-sm font-bold text-indigo-900">الوردية: {emp.shiftType === "FIXED" ? "ثابتة من " + (emp.shiftStart ?? "—") + " إلى " + (emp.shiftEnd ?? "—") : "متغيرة"}</div>
           <Row label="كود الموظف" value={emp.code} />
           <Row label="الوظيفة" value={emp.position.title} />
           <Row label="القسم" value={emp.department.name} />
@@ -226,6 +234,24 @@ export default function EmployeeProfilePage() {
         </Card>
       )}
 
+      {tab === "devices" && (
+        <Card title="الأجهزة الموثوقة">
+          {(emp.trustedDevices ?? []).length === 0 ? <Empty msg="لا توجد أجهزة مرتبطة — أول تسجيل حضور سيربط الجهاز تلقائياً" /> : (
+            <div className="space-y-3">
+              {emp.trustedDevices.map((dv: any) => (
+                <div key={dv.id} className="flex items-center justify-between gap-3 rounded-lg border border-slate-200 p-3">
+                  <div>
+                    <div className="font-bold text-slate-900 text-sm">{dv.name || "هاتف الموظف"}</div>
+                    <div className="text-xs text-slate-500 mt-1">آخر استخدام: {dv.lastUsedAt ? new Date(dv.lastUsedAt).toLocaleString("ar-EG") : "—"} • IP: {dv.ipAddress ?? "—"}</div>
+                  </div>
+                  <button onClick={() => unlinkDevice(dv.id)} className="bg-rose-600 text-white text-xs font-bold rounded-lg px-3 py-2 hover:bg-rose-700 shrink-0">فك الربط</button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
+
       {tab === "withdrawals" && (
         <Card title="المسحوبات">
           {emp.withdrawals.length === 0 ? <Empty msg="لا توجد مسحوبات" /> : (
@@ -253,12 +279,13 @@ export default function EmployeeProfilePage() {
           {emp.payrollItems.length === 0 ? <Empty msg="لا توجد مرتبات" /> : (
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead><tr className="bg-slate-50">{["الشهر", "الأساسي", "البدلات", "الخصومات", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2 font-bold text-slate-600">{h}</th>)}</tr></thead>
+                <thead><tr className="bg-slate-50">{["الشهر", "أيام العمل", "الأساسي", "البدلات", "الخصومات", "الصافي"].map(h => <th key={h} className="text-right px-3 py-2 font-bold text-slate-600">{h}</th>)}</tr></thead>
                 <tbody className="divide-y divide-slate-100">
                   {emp.payrollItems.map((p: any) => (
                     <tr key={p.id}>
                       <td className="px-3 py-2 font-bold">{d(p.payrollRun.period)}</td>
-                      <td className="px-3 py-2">{Number(p.basicSalary).toLocaleString("ar-EG")}</td>
+                      <td className="px-3 py-2 font-bold text-indigo-600">{p.workedDays}</td>
+                        <td className="px-3 py-2">{Number(p.basicSalary).toLocaleString("ar-EG")}</td>
                       <td className="px-3 py-2">{Number(p.allowances).toLocaleString("ar-EG")}</td>
                       <td className="px-3 py-2">{Number(p.absencesDed) + Number(p.lateDed) + Number(p.loanDed) + Number(p.penalties) + Number(p.insurance) + Number(p.tax)}</td>
                       <td className="px-3 py-2 font-extrabold text-emerald-700">{Number(p.net).toLocaleString("ar-EG")}</td>

@@ -130,6 +130,9 @@ model Employee {
   id             String          @id @default(cuid())
   code           String          @unique
   pin            String?
+  shiftType      String   @default("VARIABLE")
+  shiftStart     String?
+  shiftEnd       String?
   nationalId     String?         @unique
   firstName      String
   lastName       String
@@ -283,6 +286,7 @@ model LeaveType {
   isPaid      Boolean        @default(true)
   defaultDays Int            @default(21)
   carriesOver Boolean        @default(false)
+  monthly      Boolean  @default(false)
   balances    LeaveBalance[]
   requests    LeaveRequest[]
 }

@@ -10,7 +10,8 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { employeeCode, pin, qrSecret, latitude, longitude, deviceId } = body;
     const ip = req.headers.get("x-forwarded-for") ?? "unknown";
-    if (!employeeCode || !pin || !qrSecret) return NextResponse.json({ error: "بيانات غير مكتملة" }, { status: 400 });
+    const requirePin = (await getSetting("attendance.require_pin", "true")) === "true";
+    if (!employeeCode || !qrSecret || (requirePin && !pin)) return NextResponse.json({ error: "بيانات غير مكتملة" }, { status: 400 });
 
     const branch = await db.branch.findFirst({ where: { qrSecret } });
     if (!branch) return NextResponse.json({ error: "QR غير صالح لهذا الفرع" }, { status: 400 });
@@ -18,7 +19,7 @@ export async function POST(req: Request) {
     const employee = await db.employee.findFirst({ where: { code: employeeCode } });
     if (!employee) return NextResponse.json({ error: "الموظف غير موجود" }, { status: 404 });
     if (employee.status === "TERMINATED") return NextResponse.json({ error: "الموظف منتهي الخدمة" }, { status: 403 });
-    if (!employee.pin || employee.pin !== pin) return NextResponse.json({ error: "PIN غير صحيح" }, { status: 401 });
+    if (requirePin && (!employee.pin || employee.pin !== pin)) return NextResponse.json({ error: "PIN غير صحيح" }, { status: 401 });
 
     if (!deviceId) return NextResponse.json({ error: "معرف الجهاز مطلوب" }, { status: 400 });
     const trusted = await db.trustedDevice.findMany({ where: { employeeId: employee.id, isTrusted: true } });

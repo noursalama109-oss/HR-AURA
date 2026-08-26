@@ -3,6 +3,6 @@ export async function register() {
     const { db } = await import("@/lib/db");
     setInterval(async () => {
       try { await db.$queryRaw`SELECT 1`; } catch {}
-    }, 45000);
+    }, 120000);
   }
 }

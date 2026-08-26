@@ -14,7 +14,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   const { id } = await params;
   const employee = await db.employee.findUnique({
     where: { id },
-    include: {
+    include: { trustedDevices: true,
       branch: true,
       department: true,
       position: true,

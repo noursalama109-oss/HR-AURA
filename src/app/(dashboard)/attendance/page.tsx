@@ -1,4 +1,5 @@
 "use client";
+import MissingModal from "@/components/MissingModal";
 
 import { useCallback, useEffect, useState } from "react";
 import { Clock, LogIn, LogOut, AlertTriangle } from "lucide-react";
@@ -85,6 +86,7 @@ export default function AttendancePage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-extrabold text-slate-900">الحضور والانصراف</h1>
+      <MissingModal />
           <p className="text-slate-500 mt-1">{new Date().toLocaleDateString("ar-EG", { weekday: "long", year: "numeric", month: "long", day: "numeric" })}</p>
         </div>
         <button onClick={processAbsences} disabled={processing}
@@ -129,7 +131,7 @@ export default function AttendancePage() {
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>{["الموظف", "الحضور", "الانصراف", "تأخير (د)", "إضافي (د)", "الحالة"].map(h => <th key={h} className="text-right px-4 py-3 font-bold text-slate-600">{h}</th>)}</tr>
+                <tr>{["الموظف", "الحضور", "الانصراف", "إضافي (د)", "الحالة"].map(h => <th key={h} className="text-right px-4 py-3 font-bold text-slate-600">{h}</th>)}</tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {data.records.map((r: any) => (
@@ -137,8 +139,7 @@ export default function AttendancePage() {
                     <td className="px-4 py-3 font-bold text-slate-900">{r.employee.firstName} {r.employee.lastName}</td>
                     <td className="px-4 py-3">{t(r.checkIn)}</td>
                     <td className="px-4 py-3">{t(r.checkOut)}</td>
-                    <td className="px-4 py-3">{r.lateMinutes}</td>
-                    <td className="px-4 py-3">{r.overtimeMin}</td>
+                                        <td className="px-4 py-3">{r.overtimeMin}</td>
                     <td className="px-4 py-3"><span className={`text-xs font-bold border rounded-full px-2.5 py-1 ${attLabels[r.status]?.cls}`}>{attLabels[r.status]?.label}</span></td>
                   </tr>
                 ))}

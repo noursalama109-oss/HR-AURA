@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
-import { Users, Plus, Search, Eye } from "lucide-react";
+import { Users, Plus, Search, Eye, Pencil } from "lucide-react";
 
 const statusLabels: Record<string, { label: string; cls: string }> = {
   ACTIVE: { label: "نشط", cls: "bg-emerald-50 text-emerald-700 border-emerald-200" },
@@ -29,6 +29,7 @@ export default function EmployeesPage() {
   const [form, setForm] = useState<any>({});
   const [formError, setFormError] = useState("");
   const [saving, setSaving] = useState(false);
+  const [editId, setEditId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -54,17 +55,23 @@ export default function EmployeesPage() {
 
   function set(k: string, v: any) { setForm((f: any) => ({ ...f, [k]: v })); }
 
+  function openEdit(emp: any) {
+    setEditId(emp.id);
+    setForm({ ...emp, hireDate: emp.hireDate ? emp.hireDate.slice(0, 10) : "", dateOfBirth: emp.dateOfBirth ? emp.dateOfBirth.slice(0, 10) : "" });
+    setShowModal(true);
+  }
+
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSaving(true); setFormError("");
-    const res = await fetch("/api/employees", {
-      method: "POST",
+    const res = await fetch(editId ? `/api/employees/${editId}` : "/api/employees", {
+      method: editId ? "PUT" : "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(form),
     });
     const data = await res.json();
     setSaving(false);
-    if (res.ok) { setShowModal(false); setForm({}); setPage(1); load(); }
+    if (res.ok) { setShowModal(false); setForm({}); setEditId(null); setPage(1); load(); }
     else setFormError(data.error ?? "حدث خطأ غير متوقع");
   }
 
@@ -75,7 +82,7 @@ export default function EmployeesPage() {
           <h1 className="text-3xl font-extrabold text-slate-900">الموظفين</h1>
           <p className="text-slate-500 mt-1">{total} موظف مسجل بالنظام</p>
         </div>
-        <button onClick={() => setShowModal(true)} className="flex items-center gap-2 bg-indigo-600 text-white font-bold rounded-lg px-4 py-2.5 hover:bg-indigo-700 transition">
+        <button onClick={() => { setEditId(null); setForm({}); setShowModal(true); }} className="flex items-center gap-2 bg-indigo-600 text-white font-bold rounded-lg px-4 py-2.5 hover:bg-indigo-700 transition">
           <Plus className="w-5 h-5" /> إضافة موظف
         </button>
       </div>
@@ -150,6 +157,7 @@ export default function EmployeesPage() {
                       <Link href={`/employees/${emp.id}`} className="text-indigo-600 hover:bg-indigo-50 rounded-lg p-2 inline-flex">
                         <Eye className="w-4 h-4" />
                       </Link>
+                        <button onClick={() => openEdit(emp)} className="text-slate-500 hover:bg-slate-100 rounded-lg p-2 inline-flex"><Pencil className="w-4 h-4" /></button>
                     </td>
                   </tr>
                 ))}
@@ -184,6 +192,13 @@ export default function EmployeesPage() {
               <div><label className="block text-sm font-bold text-slate-700 mb-1">المدير المباشر</label><select value={form.managerId ?? ""} onChange={e => set("managerId", e.target.value)} className={inputCls}><option value="">—</option>{managers.map((m: any) => <option key={m.id} value={m.id}>{m.firstName} {m.lastName}</option>)}</select></div>
               <div><label className="block text-sm font-bold text-slate-700 mb-1">تاريخ التعيين *</label><input required type="date" value={form.hireDate ?? ""} onChange={e => set("hireDate", e.target.value)} className={inputCls} /></div>
               <div><label className="block text-sm font-bold text-slate-700 mb-1">نوع التوظيف</label><select value={form.employmentType ?? "FULL_TIME"} onChange={e => set("employmentType", e.target.value)} className={inputCls}><option value="FULL_TIME">دوام كامل</option><option value="PART_TIME">دوام جزئي</option><option value="CONTRACT">تعاقد</option><option value="INTERN">تدريب</option></select></div>
+              <div><label className="block text-sm font-bold text-slate-700 mb-1">نوع الوردية</label><select value={form.shiftType ?? "VARIABLE"} onChange={e => set("shiftType", e.target.value)} className={inputCls}><option value="VARIABLE">متغير</option><option value="FIXED">ثابت</option></select></div>
+              {form.shiftType === "FIXED" && (
+                <div className="md:col-span-2 grid grid-cols-2 gap-4">
+                  <div><label className="block text-sm font-bold text-slate-700 mb-1">من الساعة</label><input type="time" value={form.shiftStart ?? ""} onChange={e => set("shiftStart", e.target.value)} className={inputCls} /></div>
+                  <div><label className="block text-sm font-bold text-slate-700 mb-1">إلى الساعة</label><input type="time" value={form.shiftEnd ?? ""} onChange={e => set("shiftEnd", e.target.value)} className={inputCls} /></div>
+                </div>
+              )}
               <div><label className="block text-sm font-bold text-slate-700 mb-1">الحالة</label><select value={form.status ?? "PROBATION"} onChange={e => set("status", e.target.value)} className={inputCls}><option value="PROBATION">فترة اختبار</option><option value="ACTIVE">نشط</option><option value="ON_LEAVE">في إجازة</option><option value="SUSPENDED">موقوف</option><option value="TERMINATED">منتهي</option></select></div>
               <div className="md:col-span-2"><label className="block text-sm font-bold text-slate-700 mb-1">العنوان</label><input value={form.address ?? ""} onChange={e => set("address", e.target.value)} className={inputCls} /></div>
               <div className="md:col-span-2 flex gap-3 justify-end pt-2">
